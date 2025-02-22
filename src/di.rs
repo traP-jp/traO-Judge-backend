@@ -21,8 +21,10 @@ pub struct DiContainer {
         SessionRepositoryImpl,
         MailClientImpl,
     >,
-    user_service: UserService<UserRepositoryImpl, SessionRepositoryImpl, AuthRepositoryImpl, MailClientImpl>,
-    submission_service: SubmissionService<SessionRepositoryImpl, SubmissionRepositoryImpl, ProblemRepositoryImpl>,
+    user_service:
+        UserService<UserRepositoryImpl, SessionRepositoryImpl, AuthRepositoryImpl, MailClientImpl>,
+    submission_service:
+        SubmissionService<SessionRepositoryImpl, SubmissionRepositoryImpl, ProblemRepositoryImpl>,
 }
 
 impl DiContainer {
@@ -48,11 +50,16 @@ impl DiContainer {
         }
     }
 
-    pub fn user_service(&self) -> &UserService<UserRepositoryImpl, SessionRepositoryImpl, AuthRepositoryImpl, MailClientImpl> {
+    pub fn user_service(
+        &self,
+    ) -> &UserService<UserRepositoryImpl, SessionRepositoryImpl, AuthRepositoryImpl, MailClientImpl>
+    {
         &self.user_service
     }
 
-    pub fn auth_service(&self) -> &AuthenticationService<
+    pub fn auth_service(
+        &self,
+    ) -> &AuthenticationService<
         AuthRepositoryImpl,
         UserRepositoryImpl,
         SessionRepositoryImpl,
@@ -61,7 +68,10 @@ impl DiContainer {
         &self.auth_service
     }
 
-    pub fn submission_service(&self) -> &SubmissionService<SessionRepositoryImpl, SubmissionRepositoryImpl, ProblemRepositoryImpl> {
+    pub fn submission_service(
+        &self,
+    ) -> &SubmissionService<SessionRepositoryImpl, SubmissionRepositoryImpl, ProblemRepositoryImpl>
+    {
         &self.submission_service
     }
 }
