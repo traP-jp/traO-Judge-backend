@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use crate::{
     infrastructure::{
         external::mail::MailClientImpl,
@@ -17,55 +15,44 @@ use crate::{
 
 #[derive(Clone)]
 pub struct DiContainer {
-    auth_service: Arc<
-        AuthenticationService<
-            AuthRepositoryImpl,
-            UserRepositoryImpl,
-            SessionRepositoryImpl,
-            MailClientImpl,
-        >,
+    auth_service: AuthenticationService<
+        AuthRepositoryImpl,
+        UserRepositoryImpl,
+        SessionRepositoryImpl,
+        MailClientImpl,
     >,
-    user_service: Arc<
-        UserService<UserRepositoryImpl, SessionRepositoryImpl, AuthRepositoryImpl, MailClientImpl>,
-    >,
-    submission_service: Arc<
-        SubmissionService<SessionRepositoryImpl, SubmissionRepositoryImpl, ProblemRepositoryImpl>,
-    >,
+    user_service: UserService<UserRepositoryImpl, SessionRepositoryImpl, AuthRepositoryImpl, MailClientImpl>,
+    submission_service: SubmissionService<SessionRepositoryImpl, SubmissionRepositoryImpl, ProblemRepositoryImpl>,
 }
 
 impl DiContainer {
     pub async fn new(provider: Provider) -> Self {
         Self {
-            auth_service: Arc::new(AuthenticationService::new(
+            auth_service: AuthenticationService::new(
                 provider.provide_auth_repository(),
                 provider.provide_user_repository(),
                 provider.provide_session_repository(),
                 provider.provide_mail_client(),
-            )),
-            user_service: Arc::new(UserService::new(
+            ),
+            user_service: UserService::new(
                 provider.provide_user_repository(),
                 provider.provide_session_repository(),
                 provider.provide_auth_repository(),
                 provider.provide_mail_client(),
-            )),
-            submission_service: Arc::new(SubmissionService::new(
+            ),
+            submission_service: SubmissionService::new(
                 provider.provide_session_repository(),
                 provider.provide_submission_repository(),
                 provider.provide_problem_repository(),
-            )),
+            ),
         }
     }
 
-    pub fn user_service(
-        &self,
-    ) -> &UserService<UserRepositoryImpl, SessionRepositoryImpl, AuthRepositoryImpl, MailClientImpl>
-    {
+    pub fn user_service(&self) -> &UserService<UserRepositoryImpl, SessionRepositoryImpl, AuthRepositoryImpl, MailClientImpl> {
         &self.user_service
     }
 
-    pub fn auth_service(
-        &self,
-    ) -> &AuthenticationService<
+    pub fn auth_service(&self) -> &AuthenticationService<
         AuthRepositoryImpl,
         UserRepositoryImpl,
         SessionRepositoryImpl,
@@ -74,10 +61,7 @@ impl DiContainer {
         &self.auth_service
     }
 
-    pub fn submission_service(
-        &self,
-    ) -> &SubmissionService<SessionRepositoryImpl, SubmissionRepositoryImpl, ProblemRepositoryImpl>
-    {
+    pub fn submission_service(&self) -> &SubmissionService<SessionRepositoryImpl, SubmissionRepositoryImpl, ProblemRepositoryImpl> {
         &self.submission_service
     }
 }
