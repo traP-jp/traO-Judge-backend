@@ -1,18 +1,26 @@
-use async_sqlx_session::MySqlSessionStore;
-use sqlx::MySqlPool;
+use di::DiContainer;
+use infrastructure::provider::Provider;
+use tower_http::trace::TraceLayer;
 
-mod handler;
-mod repository;
-mod utils;
+pub mod di;
+pub mod domain;
+pub mod infrastructure;
+pub mod presentation;
+pub mod usecase;
 
-#[must_use]
-#[derive(Clone)]
-pub struct Repository {
-    pool: MySqlPool,
-    session_store: MySqlSessionStore,
-    bcrypt_cost: u32,
-}
+pub use presentation::handler::make_router;
 
-pub fn make_router(app_state: Repository) -> axum::Router {
-    handler::make_router(app_state)
+pub async fn run() -> anyhow::Result<()> {
+    let provider = Provider::new().await.unwrap();
+    let di_container = DiContainer::new(provider).await;
+
+    let app = make_router(di_container).layer(TraceLayer::new_for_http());
+
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
+
+    tracing::debug!("listening on {}", listener.local_addr()?);
+
+    axum::serve(listener, app).await?;
+
+    Ok(())
 }

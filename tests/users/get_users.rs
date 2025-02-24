@@ -8,12 +8,18 @@ use axum::{
 use http_body_util::BodyExt;
 use serde_json::Value;
 use tower::ServiceExt;
-use trao_judge_backend::{make_router, Repository};
+use trao_judge_backend::{
+    di::DiContainer,
+    domain::repository::{session::SessionRepository, user::UserRepository},
+    infrastructure::provider::Provider,
+    make_router,
+};
 
 #[sqlx::test(fixtures("common"))]
 async fn get_user_by_id(pool: sqlx::MySqlPool) -> anyhow::Result<()> {
-    let state = Repository::create_by_pool(pool).await?;
-    let mut app = make_router(state);
+    let provider = Provider::create_by_pool(pool).await?;
+    let di_container = DiContainer::new(provider).await;
+    let mut app = make_router(di_container);
 
     let tests = vec![1, 2, 3];
 
@@ -41,8 +47,9 @@ async fn get_user_by_id(pool: sqlx::MySqlPool) -> anyhow::Result<()> {
 
 #[sqlx::test(fixtures("common"))]
 async fn get_user_by_id_not_found(pool: sqlx::MySqlPool) -> anyhow::Result<()> {
-    let state = Repository::create_by_pool(pool).await?;
-    let mut app = make_router(state);
+    let provider = Provider::create_by_pool(pool).await?;
+    let di_container = DiContainer::new(provider).await;
+    let mut app = make_router(di_container);
 
     let not_found_case = vec![0, 4, 10, 1000000];
     for id in not_found_case {
@@ -64,14 +71,22 @@ async fn get_user_by_id_not_found(pool: sqlx::MySqlPool) -> anyhow::Result<()> {
 
 #[sqlx::test(fixtures("common"))]
 async fn get_user_me(pool: sqlx::MySqlPool) -> anyhow::Result<()> {
-    let state = Repository::create_by_pool(pool).await?;
-    let mut app = make_router(state.clone());
+    let provider = Provider::create_by_pool(pool).await?;
+    let di_container = DiContainer::new(provider.clone()).await;
+    let mut app = make_router(di_container);
 
     let tests = vec![1, 2, 3];
 
     for id in tests {
-        let session_id = state
-            .create_session(state.get_user_by_display_id(id).await?.unwrap())
+        let session_id = provider
+            .provide_session_repository()
+            .create_session(
+                provider
+                    .provide_user_repository()
+                    .get_user_by_display_id(id)
+                    .await?
+                    .unwrap(),
+            )
             .await?;
 
         let response = app
@@ -97,8 +112,9 @@ async fn get_user_me(pool: sqlx::MySqlPool) -> anyhow::Result<()> {
 
 #[sqlx::test(fixtures("common"))]
 async fn get_user_me_unauthorized(pool: sqlx::MySqlPool) -> anyhow::Result<()> {
-    let state = Repository::create_by_pool(pool).await?;
-    let mut app = make_router(state.clone());
+    let provider = Provider::create_by_pool(pool).await?;
+    let di_container = DiContainer::new(provider).await;
+    let mut app = make_router(di_container);
 
     // Test unauthorized case
     let response = app

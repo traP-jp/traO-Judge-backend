@@ -16,16 +16,3 @@ impl RequestBuilderExt for request::Builder {
             .unwrap()
     }
 }
-
-pub fn remove_field(json: &mut serde_json::Value, ignore_fields: &Vec<&str>) {
-    match json {
-        serde_json::Value::Object(obj) => {
-            for field in ignore_fields {
-                obj.remove(*field);
-            }
-        }
-        _ => {
-            panic!("Invalid JSON format");
-        }
-    }
-}

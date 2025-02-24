@@ -1,4 +1,3 @@
-use super::remove_field;
 use serde_json::{json, Value};
 
 pub fn users_check_by_id(id: i64, resp_json: &mut Value) -> anyhow::Result<()> {
@@ -14,6 +13,8 @@ pub fn users_check_by_id(id: i64, resp_json: &mut Value) -> anyhow::Result<()> {
             "xLink": null,
             "selfIntroduction": "test_self_introduction_1",
             "role": "commonUser",
+            "createdAt": "2023-01-01T09:15:32Z",
+            "updatedAt": "2023-01-01T10:20:47Z",
         }),
         2 => json!({
             "id": "22222222-2222-2222-2222-222222222222",
@@ -26,6 +27,8 @@ pub fn users_check_by_id(id: i64, resp_json: &mut Value) -> anyhow::Result<()> {
             "xLink": "https://x.com/test_user_2",
             "selfIntroduction": "",
             "role": "traPUser",
+            "createdAt": "2023-02-12T14:05:12Z",
+            "updatedAt": "2023-02-12T15:30:00Z",
         }),
         3 => json!({
             "id": "33333333-3333-3333-3333-333333333333",
@@ -38,12 +41,12 @@ pub fn users_check_by_id(id: i64, resp_json: &mut Value) -> anyhow::Result<()> {
             "xLink": null,
             "selfIntroduction": "",
             "role": "admin",
+            "createdAt": "2023-03-20T08:00:00Z",
+            "updatedAt": "2023-03-20T08:45:00Z",
         }),
         _ => return Err(anyhow::anyhow!("Invalid id")),
     };
-    let ignore_field = vec!["createdAt", "updatedAt"];
 
-    remove_field(resp_json, &ignore_field);
     assert_eq!(resp_json, &users_json);
 
     Ok(())

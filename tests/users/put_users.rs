@@ -8,12 +8,18 @@ use axum::{
 use http_body_util::BodyExt;
 use serde_json::{json, Value};
 use tower::ServiceExt;
-use trao_judge_backend::{make_router, Repository};
+use trao_judge_backend::{
+    di::DiContainer,
+    domain::repository::{session::SessionRepository, user::UserRepository},
+    infrastructure::provider::Provider,
+    make_router,
+};
 
 #[sqlx::test(fixtures("common"))]
 async fn put_user_me(pool: sqlx::MySqlPool) -> anyhow::Result<()> {
-    let state = Repository::create_by_pool(pool).await?;
-    let mut app = make_router(state.clone());
+    let provider = Provider::create_by_pool(pool).await?;
+    let di_container = DiContainer::new(provider.clone()).await;
+    let mut app = make_router(di_container);
 
     let tests = vec![
         (
@@ -48,8 +54,15 @@ async fn put_user_me(pool: sqlx::MySqlPool) -> anyhow::Result<()> {
     ];
 
     for (id, req_json, changes) in tests {
-        let session_id = state
-            .create_session(state.get_user_by_display_id(id).await?.unwrap())
+        let session_id = provider
+            .provide_session_repository()
+            .create_session(
+                provider
+                    .provide_user_repository()
+                    .get_user_by_display_id(id)
+                    .await?
+                    .unwrap(),
+            )
             .await?;
 
         let response = app
@@ -95,8 +108,9 @@ async fn put_user_me(pool: sqlx::MySqlPool) -> anyhow::Result<()> {
 
 #[sqlx::test(fixtures("common"))]
 async fn put_user_me_invalid(pool: sqlx::MySqlPool) -> anyhow::Result<()> {
-    let state = Repository::create_by_pool(pool).await?;
-    let mut app = make_router(state.clone());
+    let provider = Provider::create_by_pool(pool).await?;
+    let di_container = DiContainer::new(provider.clone()).await;
+    let mut app = make_router(di_container);
 
     let response = app
         .borrow_mut()
@@ -114,8 +128,15 @@ async fn put_user_me_invalid(pool: sqlx::MySqlPool) -> anyhow::Result<()> {
 
     assert_eq!(response.status(), 401);
 
-    let session_id = state
-        .create_session(state.get_user_by_display_id(1).await?.unwrap())
+    let session_id = provider
+        .provide_session_repository()
+        .create_session(
+            provider
+                .provide_user_repository()
+                .get_user_by_display_id(1)
+                .await?
+                .unwrap(),
+        )
         .await?;
 
     let tests = vec![
